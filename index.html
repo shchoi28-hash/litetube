@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>LiteTube Pro A1416</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: #111;
+    color: #eee;
+    font-family: -apple-system, Helvetica, Arial, sans-serif;
+    padding: 10px;
+  }
+  .bar {
+    display: -webkit-flex;
+    display: flex;
+    margin-bottom: 10px;
+  }
+  input[type="text"] {
+    -webkit-flex: 1;
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #222;
+    color: #fff;
+  }
+  button {
+    margin-left: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    background: #cc0000;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+  }
+  button.sub-btn {
+    background: #333;
+    font-weight: normal;
+  }
+  button.add-btn {
+    background: #1f6feb;
+  }
+  #apiBox {
+    display: none;
+    background: #1e1e1e;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border: 1px solid #333;
+  }
+  #apiBox p {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 6px;
+  }
+  .bookmark-section {
+    background: #181818;
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border: 1px solid #282828;
+  }
+  .bookmark-header {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    -webkit-align-items: center;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .bookmark-title {
+    font-size: 12px;
+    color: #aaa;
+  }
+  .bookmark-list {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+  .bm-chip {
+    display: -webkit-inline-flex;
+    display: inline-flex;
+    -webkit-align-items: center;
+    align-items: center;
+    background: #2a2a2a;
+    color: #fff;
+    padding: 6px 10px;
+    margin: 0 6px 6px 0;
+    border-radius: 16px;
+    font-size: 13px;
+    border: 1px solid #3d3d3d;
+  }
+  .bm-del {
+    margin-left: 6px;
+    color: #ff6b6b;
+    font-weight: bold;
+    padding: 0 4px;
+  }
+  .player-wrap {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: 0;
+  }
+  .status {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 8px;
+  }
+  .result-item {
+    display: -webkit-flex;
+    display: flex;
+    background: #1c1c1c;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #2a2a2a;
+  }
+  .result-thumb {
+    width: 120px;
+    height: 68px;
+    background: #000;
+    border-radius: 4px;
+    margin-right: 10px;
+    -webkit-flex-shrink: 0;
+    flex-shrink: 0;
+  }
+  .result-info {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: hidden;
+  }
+  .result-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    line-height: 1.3;
+    max-height: 36px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .result-bottom {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-justify-content: space-between;
+    justify-content: space-between;
+    -webkit-align-items: center;
+    align-items: center;
+  }
+  .result-channel {
+    font-size: 12px;
+    color: #888;
+  }
+  .save-ch-btn {
+    background: #2b3a4a;
+    color: #7cc0ff;
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <input type="text" id="searchInput" placeholder="검색어 또는 유튜브 주소 입력" onkeypress="if(event.keyCode===13) handleSearch()">
+  <button onclick="handleSearch()">검색</button>
+  <button class="sub-btn" onclick="toggleApiBox()">키 설정</button>
+</div>
+
+<div id="apiBox">
+  <p>YouTube Data API v3 키를 입력하세요. (기기에 자동 저장됨)</p>
+  <div class="bar" style="margin-bottom:0;">
+    <input type="text" id="apiKeyInput" placeholder="AIzaSy...">
+    <button onclick="saveApiKey()">저장</button>
+  </div>
+</div>
+
+<div class="bookmark-section">
+  <div class="bookmark-header">
+    <span class="bookmark-title">즐겨찾기 채널 (터치 시 최신 영상 로드)</span>
+  </div>
+  <div class="bookmark-list" id="bookmarkList"></div>
+</div>
+
+<div class="player-wrap">
+  <iframe id="ytPlayer" src="" allowfullscreen webkitallowfullscreen></iframe>
+</div>
+
+<div class="status" id="statusText">검색어를 입력하거나 즐겨찾기 채널을 선택하세요.</div>
+<div id="resultsList"></div>
+
+<script>
+  var API_STORAGE_KEY = 'litetube_yt_apikey';
+  var BM_STORAGE_KEY = 'litetube_yt_bookmarks';
+
+  window.onload = function() {
+    var savedKey = getApiKey();
+    if (savedKey) {
+      document.getElementById('apiKeyInput').value = savedKey;
+    } else {
+      document.getElementById('apiBox').style.display = 'block';
+    }
+    renderBookmarks();
+  };
+
+  function toggleApiBox() {
+    var box = document.getElementById('apiBox');
+    box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+  }
+
+  function getApiKey() {
+    try { return localStorage.getItem(API_STORAGE_KEY) || ''; } catch (e) { return ''; }
+  }
+
+  function saveApiKey() {
+    var val = document.getElementById('apiKeyInput').value.replace(/^\s+|\s+$/g, '');
+    if (!val) {
+      alert('API 키를 입력해 주세요.');
+      return;
+    }
+    try {
+      localStorage.setItem(API_STORAGE_KEY, val);
+      alert('API 키가 저장되었습니다.');
+      document.getElementById('apiBox').style.display = 'none';
+    } catch (e) {
+      alert('저장 실패 (사파리 개인정보 보호 브라우징 모드를 해제해 주세요).');
+    }
+  }
+
+  function getBookmarks() {
+    try {
+      var raw = localStorage.getItem(BM_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveBookmarks(list) {
+    try {
+      localStorage.setItem(BM_STORAGE_KEY, JSON.stringify(list));
+    } catch (e) {
+      alert('즐겨찾기 저장에 실패했습니다.');
+    }
+    renderBookmarks();
+  }
+
+  function addBookmark(channelId, channelTitle) {
+    var list = getBookmarks();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === channelId) {
+        alert('이미 즐겨찾기에 등록된 채널입니다.');
+        return;
+      }
+    }
+    list.push({ id: channelId, title: channelTitle });
+    saveBookmarks(list);
+    alert('[' + channelTitle + '] 채널이 즐겨찾기에 추가되었습니다.');
+  }
+
+  function removeBookmark(channelId) {
+    if (!confirm('이 채널을 즐겨찾기에서 삭제할까요?')) return;
+    var list = getBookmarks();
+    var next = [];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id !== channelId) {
+        next.push(list[i]);
+      }
+    }
+    saveBookmarks(next);
+  }
+
+  function renderBookmarks() {
+    var container = document.getElementById('bookmarkList');
+    container.innerHTML = '';
+    var list = getBookmarks();
+
+    if (list.length === 0) {
+      var emptyMsg = document.createElement('span');
+      emptyMsg.style.fontSize = '12px';
+      emptyMsg.style.color = '#666';
+      emptyMsg.innerText = '등록된 채널이 없습니다. 영상을 검색한 뒤 [+구독] 버튼을 눌러보세요.';
+      container.appendChild(emptyMsg);
+      return;
+    }
+
+    for (var i = 0; i < list.length; i++) {
+      (function(bm) {
+        var chip = document.createElement('div');
+        chip.className = 'bm-chip';
+
+        var label = document.createElement('span');
+        label.innerText = bm.title;
+        label.onclick = function() {
+          loadChannelVideos(bm.id, bm.title);
+        };
+
+        var del = document.createElement('span');
+        del.className = 'bm-del';
+        del.innerText = '×';
+        del.onclick = function(e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          removeBookmark(bm.id);
+        };
+
+        chip.appendChild(label);
+        chip.appendChild(del);
+        container.appendChild(chip);
+      })(list[i]);
+    }
+  }
+
+  function extractId(input) {
+    var regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    var match = input.match(regExp);
+    return (match && match[1]) ? match[1] : null;
+  }
+
+  function playVideo(videoId) {
+    var player = document.getElementById('ytPlayer');
+    player.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?autoplay=1&rel=0&playsinline=1';
+    window.scrollTo(0, 0);
+  }
+
+  function handleSearch() {
+    var query = document.getElementById('searchInput').value.replace(/^\s+|\s+$/g, '');
+    if (!query) return;
+
+    var directId = extractId(query);
+    if (directId) {
+      playVideo(directId);
+      return;
+    }
+
+    var apiKey = getApiKey();
+    if (!apiKey) {
+      alert('먼저 우측 상단 [키 설정]을 눌러 YouTube API 키를 등록해 주세요.');
+      document.getElementById('apiBox').style.display = 'block';
+      return;
+    }
+
+    var url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=12&q=' +
+              encodeURIComponent(query) + '&key=' + encodeURIComponent(apiKey);
+    fetchYoutubeList(url, '검색 결과');
+  }
+
+  function loadChannelVideos(channelId, channelTitle) {
+    var apiKey = getApiKey();
+    if (!apiKey) {
+      alert('먼저 우측 상단 [키 설정]을 눌러 YouTube API 키를 등록해 주세요.');
+      document.getElementById('apiBox').style.display = 'block';
+      return;
+    }
+
+    var url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=12&channelId=' +
+              encodeURIComponent(channelId) + '&key=' + encodeURIComponent(apiKey);
+    fetchYoutubeList(url, '[' + channelTitle + '] 최신 영상');
+  }
+
+  function fetchYoutubeList(url, labelPrefix) {
+    var statusEl = document.getElementById('statusText');
+    var listEl = document.getElementById('resultsList');
+    statusEl.innerText = '불러오는 중...';
+    listEl.innerHTML = '';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            renderResults(data.items || [], labelPrefix);
+          } catch (e) {
+            statusEl.innerText = '데이터 파싱 오류가 발생했습니다.';
+          }
+        } else {
+          statusEl.innerText = '요청 실패 (오류 코드: ' + xhr.status + '). API 키와 할당량을 확인해 주세요.';
+        }
+      }
+    };
+    xhr.send();
+  }
+
+  function renderResults(items, labelPrefix) {
+    var statusEl = document.getElementById('statusText');
+    var listEl = document.getElementById('resultsList');
+    listEl.innerHTML = '';
+
+    if (items.length === 0) {
+      statusEl.innerText = '표시할 영상이 없습니다.';
+      return;
+    }
+
+    statusEl.innerText = labelPrefix + ' ' + items.length + '건 (터치 시 즉시 재생)';
+
+    for (var i = 0; i < items.length; i++) {
+      (function(item) {
+        var vid = item.id.videoId;
+        var snippet = item.snippet;
+        var thumbUrl = (snippet.thumbnails && snippet.thumbnails.default) ? snippet.thumbnails.default.url : '';
+        var chId = snippet.channelId;
+        var chTitle = snippet.channelTitle;
+
+        var div = document.createElement('div');
+        div.className = 'result-item';
+        div.onclick = function() { playVideo(vid); };
+
+        var img = document.createElement('img');
+        img.className = 'result-thumb';
+        img.src = thumbUrl;
+
+        var info = document.createElement('div');
+        info.className = 'result-info';
+
+        var title = document.createElement('div');
+        title.className = 'result-title';
+        title.innerHTML = snippet.title;
+
+        var bottom = document.createElement('div');
+        bottom.className = 'result-bottom';
+
+        var channel = document.createElement('span');
+        channel.className = 'result-channel';
+        channel.innerText = chTitle;
+
+        var subBtn = document.createElement('span');
+        subBtn.className = 'save-ch-btn';
+        subBtn.innerText = '+구독';
+        subBtn.onclick = function(e) {
+          if (e && e.stopPropagation) e.stopPropagation();
+          addBookmark(chId, chTitle);
+        };
+
+        bottom.appendChild(channel);
+        bottom.appendChild(subBtn);
+
+        info.appendChild(title);
+        info.appendChild(bottom);
+        div.appendChild(img);
+        div.appendChild(info);
+        listEl.appendChild(div);
+      })(items[i]);
+    }
+  }
+</script>
+</body>
+</html>
